@@ -192,7 +192,95 @@ void insert(char *key, int64_t value)
     insertBalance(x);
 }
 
-void delet(node *z) {
+void deleteBalance(node *z)
+{
+    if (z == NIL) {
+        return;
+    }
+    node *y = z;
+    while (z != root) {
+        y = z;
+        z = z->parent;
+        if (y == z->left) {
+            z->balance--;
+        } else {
+            z->balance++;
+        }
+        if (z->balance == 1 || z->balance == -1) {
+            break;
+        } else if (z->balance == 2) {
+            printf("2\n");
+            y = z->right;
+            if (y->balance == 1) {
+                y->balance = 0;
+                z->balance = 0;
+                rightRotate(z);
+                z->parent->balance--;
+            } else if (y->balance == -1) {
+                node *x = y->right;
+                int oldBalance = x->balance;
+                if (oldBalance == 1) {
+                    x->balance = 0;
+                    z->balance = -1;
+                    y->balance = 0;
+                } else if (oldBalance == -1) {
+                    x->balance = 0;
+                    z->balance = 0;
+                    y->balance = 1;
+                } else if (oldBalance == 0) {
+                    x->balance = 0;
+                    z->balance = 0;
+                    y->balance = 0;
+                }
+                leftRotate(y);
+                rightRotate(z);
+                z->parent->balance--;
+            } else if (y->balance == 0) {
+                y->balance = 1;
+                z->balance = -1;
+                rightRotate(z);
+                z->parent->balance--;
+            }
+        } else if (z->balance == -2) {
+            printf("-2\n");
+            y = z->left;
+            if (y->balance == -1) {
+                y->balance = 0;
+                z->balance = 0;
+                leftRotate(z);
+                z->parent->balance++;
+            } else if (y->balance == 1) {
+                node *x = y->left;
+                int oldBalance = x->balance;
+                if (oldBalance == 1) {
+                    x->balance = 0;
+                    z->balance = 0;
+                    y->balance = -1;
+                } else if (oldBalance == -1) {
+                    x->balance = 0;
+                    z->balance = 1;
+                    y->balance = 0;
+                } else if (oldBalance == 0) {
+                    x->balance = 0;
+                    z->balance = 0;
+                    y->balance = 0;
+                }
+                rightRotate(y);
+                leftRotate(z);
+                z->parent->balance++;
+            } else if (y->balance == 0) {
+                y->balance = -1;
+                z->balance = 1;
+                leftRotate(z);
+                z->parent->balance++;
+            }
+        }
+        
+    }
+}
+
+void delet(node *z)
+{
     node *x, *y;
     if (!z || z == NIL) {
         return;
@@ -224,9 +312,11 @@ void delet(node *z) {
         z->key = y->key;
         z->value = y->value;
     }
-    if (root == y) {
-        root = z;
-    }
+    // printf("%s\n", root->key);
+    // if (y->parent->left == NIL && y->parent->right == NIL) {
+    //     y->parent->balance = 0;
+    // }
+    deleteBalance(y);
     y->key = NULL;
     free(y);
 }
@@ -303,8 +393,15 @@ int main(int argc, char const *argv[])
             print(root, 0);
         } else if (isalpha(command)){
             key[0] = command;
-            scanf("%s", key + 1);
-            for (int i = 0; i < strlen(key); i++) {
+            int iter = 1;
+            while ((command = getchar()) != '\n') {
+                key[iter] = command;
+                iter++;
+            }
+            for (int i = 0; i < 256; i++) {
+                if (key[i] == '\0') {
+                    break;
+                }
                 key[i] = tolower(key[i]);
             }
             node *t = search(key);
@@ -313,8 +410,9 @@ int main(int argc, char const *argv[])
             } else {
                 printf("NoSuchWord\n");
             }
+            memset(key, '\0', 256);
         }
     }
-    destroy(root);
+    root = destroy(root);
     return 0;
 }
