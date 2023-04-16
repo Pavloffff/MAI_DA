@@ -1,11 +1,79 @@
 #include <iostream>
+#include <string.h>
 
-#define String int
+// class String
+
+class String
+{
+public:
+    char *data = (char *) NULL;
+    size_t size();
+    String &operator=(const String &s);
+    bool operator<(const String &s);
+    bool operator>(const String &s);
+    String();
+    String(char *s);
+    String(const String &s);
+    ~String();
+};
+
+String::String()
+{
+}
+
+String::String(char *s)
+{
+    this->data = new char[strlen(s) + 1];
+    memset(this->data, '\0', strlen(s) + 1);
+    memcpy(this->data, s, strlen(s) + 1);
+}
+
+String::String(const String &s)
+{
+    this->data = new char[strlen(s.data) + 1];
+    memset(this->data, '\0', strlen(s.data) + 1);
+    memcpy(this->data, s.data, strlen(s.data) + 1);
+}
+
+size_t String::size()
+{
+    return strlen(this->data);
+}
+
+String &String::operator=(const String &s)
+{
+    if (this->data != (char *) NULL) {
+        delete[] this->data;
+    }
+    this->data = new char[strlen(s.data) + 1];
+    memset(this->data, '\0', strlen(s.data) + 1);
+    memcpy(this->data, s.data, strlen(s.data) + 1);
+    return *this;
+}
+
+bool String::operator<(const String &s)
+{
+    return strcmp(this->data, s.data) < 0;
+}
+
+bool String::operator>(const String &s)
+{
+    return strcmp(this->data, s.data) > 0;
+}
+
+String::~String()
+{
+    delete[] this->data;
+}
+
+// function max
 
 int max(int x, int y)
 {
     return (x > y) ? x : y;
 }
+
+// class Node
 
 class Node
 {
@@ -89,10 +157,14 @@ Node::~Node()
 {
 }
 
+// class Tree
+
 class Tree
 {
 public:
     Node *root = NULL;
+    Node *find(String key);
+    Node *find(Node *x, String key);
     void insert(String key, uint64_t value);
     Node *insert(Node *x, String key, uint64_t value);
     void erace(String key);
@@ -103,6 +175,24 @@ public:
     Tree();
     ~Tree();
 };
+
+Node *Tree::find(String key)
+{
+    return this->find(this->root, key);
+}
+
+Node *Tree::find(Node *x, String key)
+{
+    if (x == NULL) {
+        return NULL;
+    } else if (x->key > key) {
+        return find(x->left, key);
+    } else if (x->key < key) {
+        return find(x->right, key);
+    } else {
+        return x;
+    }
+}
 
 void Tree::insert(String key, uint64_t value)
 {
@@ -149,6 +239,7 @@ void Tree::erace(String key)
 Node *Tree::erace(Node *x, String key)
 {
     if (x == NULL) {
+        printf("NoSuchWord\n");
         return x;
     }
     if (key < x->key) {
@@ -209,7 +300,7 @@ void Tree::print(Node *x, int depth)
     for (int i = 0; i < depth; i++) {
         printf("\t");
     }
-    printf("%d:%ld^%d\n", x->key, x->value, x->balance());
+    printf("%s:%ld^%d\n", x->key.data, x->value, x->balance());
     this->print(x->left, depth + 1);
     this->print(x->right, depth + 1);
 }
@@ -220,7 +311,7 @@ Node *Tree::destroy(Node *x)
         return x;
     }
     if (x->left == NULL && x->right == NULL) {
-        // destruct string
+        
         delete x;
         return NULL;
     }
@@ -243,26 +334,67 @@ Tree::~Tree()
 int main(int argc, char const *argv[])
 {
     Tree t;
-    t.print();
-    t.insert(6, 2);
-    t.print();
-    t.insert(5, 3);
-    t.print();
-    t.insert(4, 4);
-    t.print();
-    t.insert(3, 5);
-    t.print();
-    t.insert(2, 6);
-    t.print();
-    t.insert(1, 7);
-    t.print();
-    t.insert(0, 7);
-    t.print();
-    t.erace(6);
-    t.print();
-    t.erace(4);
-    t.print();
-    t.erace(5);
-    t.print();
+    char key[256];
+    // char *fileName;
+    char command;
+    uint64_t value;
+    while (!feof(stdin)) {
+        command = getchar();
+        if (command == '+') {
+            getchar();
+            scanf("%s", key);
+            for (int i = 0; i < strlen(key); i++) {
+                key[i] = tolower(key[i]);
+            }
+            scanf("%ld", &value);
+            String Key(key);
+            Node *x = t.find(Key);
+            if (x != NULL) {
+                printf("Exist\n");   
+            } else {
+                t.insert(Key, value);
+                printf("OK\n");
+            }
+        } else if (command == '-') {
+            getchar();
+            scanf("%s", key);
+            for (int i = 0; i < strlen(key); i++) {
+                key[i] = tolower(key[i]);
+            }
+            String Key(key);
+            Node *x = t.find(Key);
+            if (x == NULL) {
+                t.erace(key);
+                printf("OK\n");
+            } else {
+                printf("NoSuchWord\n");
+            }
+        } else if (command == '!') {
+
+        } else if (command == '>') {
+            t.print();
+        } else if (isalpha(command)) {
+            key[0] = command;
+            int iter = 1;
+            while ((command = getchar()) != '\n') {
+                key[iter] = command;
+                iter++;
+            }
+            for (int i = 0; i < 256; i++) {
+                if (key[i] == '\0') {
+                    break;
+                }
+                key[i] = tolower(key[i]);
+            }
+            String Key(key);
+            Node *x = t.find(Key);
+            if (x != NULL) {
+                printf("OK: %ld\n", x->value);
+            } else {
+                printf("NoSuchWord\n");
+            }
+        }
+        memset(key, '\0', 256);
+    }
     return 0;
 }
