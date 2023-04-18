@@ -4,18 +4,18 @@
 char NODE = '@';
 char END = '$';
 
-// class String
-
 class String
 {
 public:
-    char *data = (char *) NULL;
-    size_t size();
+    char data[257] = {'\0'};
+    int sz = 0;
+    int size();
     String &operator=(const String &s);
-    bool operator<(const String &s);
-    bool operator>(const String &s);
+    String &operator=(const char *s);
+    bool operator<(const String &s) const;
+    bool operator>(const String &) const;
     String();
-    String(char *s);
+    String(const char *s);
     String(const String &s);
     ~String();
 };
@@ -24,301 +24,320 @@ String::String()
 {
 }
 
-String::String(char *s)
+String::String(const char *s)
 {
-    this->data = new char[strlen(s) + 1];
-    memset(this->data, '\0', strlen(s) + 1);
-    memcpy(this->data, s, strlen(s) + 1);
+    while (s[sz] != '\0') {
+        data[sz] = s[sz];
+        sz++;
+    }
+    for (int i = 0; i < sz; ++i) {
+		if (data[i] >= 'A' && data[i] <= 'Z') {
+			data[i] = (data[i] - ('A'-'a'));
+		}
+	}
 }
 
 String::String(const String &s)
 {
-    this->data = new char[strlen(s.data) + 1];
-    memset(this->data, '\0', strlen(s.data) + 1);
-    memcpy(this->data, s.data, strlen(s.data) + 1);
+    *this = s;
 }
 
-size_t String::size()
+int String::size()
 {
-    return strlen(this->data);
+    return sz;
 }
 
 String &String::operator=(const String &s)
 {
-    if (this->data != (char *) NULL) {
-        delete[] this->data;
-    }
-    this->data = new char[strlen(s.data) + 1];
-    memset(this->data, '\0', strlen(s.data) + 1);
-    memcpy(this->data, s.data, strlen(s.data) + 1);
+    sz = s.sz;
+    memcpy(data, s.data, sz + 1);
     return *this;
 }
 
-bool String::operator<(const String &s)
+String &String::operator=(const char *s)
 {
-    return strcmp(this->data, s.data) < 0;
+    sz = 0;
+    while (s[sz] != '\0') {
+        data[sz] = s[sz];
+        sz++;
+    }
+    data[sz] = s[sz];
+    for (int i = 0; i < sz; ++i) {
+		if (data[i] >= 'A' && data[i] <= 'Z') {
+			data[i] = (data[i] - ('A'-'a'));
+		}
+	}
+    return *this;
 }
 
-bool String::operator>(const String &s)
+bool String::operator<(const String &s) const
 {
-    return strcmp(this->data, s.data) > 0;
+    return strcmp(data, s.data) < 0;
+}
+
+bool String::operator>(const String &s) const
+{
+    return strcmp(data, s.data) > 0;
 }
 
 String::~String()
 {
-    delete[] this->data;
 }
 
-// function max
-
-int max(int x, int y)
-{
-    return (x > y) ? x : y;
-}
-
-// class Node
-
-class Node
-{
-public:
-    String key;
-    unsigned long long value;
-    Node *left;
-    Node *right;
-    int height;
-    int getHeight();
-    int balance();
-    Node *leftRotate();
-    Node *rightRotate();
-    Node *sucsessor();
-    Node();
-    Node(String key, unsigned long long value);
-    ~Node();
-};
-
-Node::Node()
-{
-}
-
-Node::Node(String key, unsigned long long value)
-{
-    this->key = key;
-    this->value = value;
-    this->height = 1;
-    this->left = NULL;
-    this->right = NULL;
-}
-
-int Node::getHeight()
-{
-    if (this == NULL) {
-        return 0;
+std::istream& operator>>(std::istream &cin, String &s) {
+    s.data[0] = '\0';
+    cin >> s.data;
+    s.sz = 0;
+    while (s.data[s.sz] != '\0') {
+        ++s.sz;
     }
-    return this->height;
+    for (int i = 0; i < s.sz; ++i) {
+		if (s.data[i] >= 'A' && s.data[i] <= 'Z') {
+			s.data[i] = (s.data[i] - ('A'-'a'));
+		}
+	}
+    return cin;
 }
 
-int Node::balance()
-{
-    if (this == NULL) {
-        return 0;
-    }
-    return this->left->getHeight() - this->right->getHeight();
+std::ostream& operator<<(std::ostream &cout, const String &s) {
+    cout << s.data;
+    return cout;
 }
-
-Node *Node::leftRotate()
-{
-    Node *x = this->right;
-    Node *y = x->left;
-    x->left = this;
-    this->right = y;
-    this->height = max(this->left->getHeight(), this->right->getHeight()) + 1;
-    x->height = max(x->left->getHeight(), x->right->getHeight()) + 1;
-    return x;
-}
-
-Node *Node::rightRotate()
-{
-    Node *x = this->left;
-    Node *y = x->right;
-    x->right = this;
-    this->left = y;
-    this->height = max(this->left->getHeight(), this->right->getHeight()) + 1;
-    x->height = max(x->left->getHeight(), x->right->getHeight()) + 1;
-    return x;
-}
-
-Node *Node::sucsessor()
-{
-    Node *tmp = this->right;
-    while (tmp->left != NULL) {
-        tmp = tmp->left;
-    }
-    return tmp;
-}
-
-Node::~Node()
-{
-}
-
-// class Tree
 
 class Tree
 {
 public:
-    Node *root = NULL;
-    Node *find(char *key);
-    Node *find(Node *x, char *key);
-    void insert(String key, unsigned long long value);
-    Node *insert(Node *x, String key, unsigned long long value);
-    void erace(char *key);
-    Node *erace(Node *x, char *key);
-    bool save(char *fileName);
-    bool save(FILE *f, Node *x);
-    bool load(char *fileName);
-    bool load(FILE *f, Node *&x);
-    void print();
-    void print(Node *x, int depth);
-    Node *destroy(Node *x);
+    String key;
+    unsigned long long value;
+    Tree *left;
+    Tree *right;
+    unsigned int height;
+    int getHeight(Tree *x);
+    int balance(Tree *x);
+    Tree *leftRotate(Tree *x);
+    Tree *rightRotate(Tree *x);
+    Tree *successor(Tree *x);
+    bool find(Tree *x, String &key);
+    Tree *insert(Tree *x, String &key, unsigned long long value);
+    Tree *erace(Tree *x, String &key);
+    void save(Tree *x, FILE *f);
+    void load(Tree *&x, FILE *f);
+    void print(Tree *x, int depth);
+    Tree *destroy(Tree *x);
     Tree();
+    Tree(String &key, unsigned long long value);
     ~Tree();
 };
 
-Node *Tree::find(char *key)
+Tree::Tree()
 {
-    return this->find(this->root, key);
 }
 
-Node *Tree::find(Node *x, char *key)
+Tree::Tree(String &key, unsigned long long value)
+{
+    this->key = key;
+    this->value = value;
+    this->left = NULL;
+    this->right = NULL;
+    this->height = 1;
+}
+
+int Tree::getHeight(Tree *x)
+{
+    if (!x) {
+        return 0;
+    }
+    return x->height;
+}
+
+Tree *Tree::leftRotate(Tree *x)
+{
+    Tree *y = x->right;
+    x->right = y->left;
+    y->left = x;
+    if (getHeight(x->left) > getHeight(x->right)) {
+        x->height = getHeight(x->left) + 1;
+    } else {
+        x->height = getHeight(x->right) + 1;
+    }
+    if (getHeight(y->left) > getHeight(y->right)) {
+        y->height = getHeight(y->left) + 1;
+    } else {
+        y->height = getHeight(y->right) + 1;
+    }
+    return y;
+}
+
+Tree *Tree::rightRotate(Tree *x)
+{
+    Tree *y = x->left;
+    x->left = y->right;
+    y->right = x;
+    if (getHeight(x->left) > getHeight(x->right)) {
+        x->height = getHeight(x->left) + 1;
+    } else {
+        x->height = getHeight(x->right) + 1;
+    }
+    if (getHeight(y->left) > getHeight(y->right)) {
+        y->height = getHeight(y->left) + 1;
+    } else {
+        y->height = getHeight(y->right) + 1;
+    }
+    return y;
+}
+
+Tree *Tree::successor(Tree *x)
 {
     if (x == NULL) {
-        return NULL;
-    } else if (strcmp(x->key.data, key) > 0) {
+        return x;
+    }
+    Tree *y = x->right;
+    if (y == NULL) {
+        return x;
+    } else {
+        while (y->left != NULL) {
+            y = y->left;
+        }
+        return y;
+    }
+}
+
+bool Tree::find(Tree *x, String &key)
+{
+    if (x == NULL) {
+        std::cout << "NoSuchWord\n";
+        return false;
+    } else if (key < x->key) {
         return find(x->left, key);
-    } else if (strcmp(x->key.data, key) < 0) {
+    } else if (key > x->key) {
         return find(x->right, key);
     } else {
-        return x;
+        std::cout << "OK: " << x->value << "\n";
+        return true;
     }
 }
 
-void Tree::insert(String key, unsigned long long value)
+int Tree::balance(Tree *x)
 {
-    this->root = this->insert(root, key, value);
+    if (x == NULL) {
+        return 0;
+    }
+    return getHeight(x->left) - getHeight(x->right);
 }
 
-Node *Tree::insert(Node *x, String key, unsigned long long value)
-{    
+Tree *Tree::insert(Tree *x, String &key, unsigned long long value)
+{
     if (x == NULL) {
-        return new Node(key, value);
-    } else if (x->key > key) {
+        std::cout << "OK\n";
+        return new Tree(key, value);
+    } else if (key < x->key) {
         x->left = insert(x->left, key, value);
-    } else if (x->key < key) {
+    } else if (key > x->key) {
         x->right = insert(x->right, key, value);
     } else {
+        std::cout << "Exist\n";
         return x;
     }
-    x->height = 1 + max(x->left->getHeight(), x->right->getHeight());
-    int balance = x->balance();
-    if (balance > 1) {
-        if (key < x->left->key) {
-            return x->rightRotate();
+    if (getHeight(x->left) > getHeight(x->right)) {
+        x->height = getHeight(x->left) + 1;
+    } else {
+        x->height = getHeight(x->right) + 1;
+    }
+    if (balance(x) > 1) {
+        if (balance(x->right) <= 0) {
+            return rightRotate(x);
         } else if (key > x->left->key) {
-            x->left = x->left->leftRotate();
-            return x->rightRotate();
+            x->left = leftRotate(x->left);
+            return rightRotate(x);
         }
     }
-    if (balance < -1) {
-        if (key > x->right->key) {
-            return x->leftRotate();
+    if (balance(x) < -1) {
+        if (balance(x->right) <= 0) {
+            return leftRotate(x);
         } else if (key < x->right->key) {
-            x->right = x->right->rightRotate();
-            return x->leftRotate();
+            x->right = rightRotate(x->right);
+            return leftRotate(x);
         }
     }
     return x;
 }
 
-void Tree::erace(char *key)
-{
-    this->root = this->erace(root, key); 
-}
-
-Node *Tree::erace(Node *x, char *key)
+Tree *Tree::erace(Tree *x, String &key)
 {
     if (x == NULL) {
-        printf("NoSuchWord\n");
+        std::cout << "NoSuchWord\n";
         return x;
-    }
-    if (strcmp(key, x->key.data) < 0) {
-        x->left = this->erace(x->left, key);
-    } else if (strcmp(key, x->key.data) > 0) {
-        x->right = this->erace(x->right, key);
+    } else if (key < x->key) {
+        x->left = erace(x->left, key);
+    } else if (key > x->key) {
+        x->right = erace(x->right, key);
     } else {
         if (x->left == NULL || x->right == NULL) {
-            Node *tmp = x->left != NULL ? x->left : x->right;
-            if (tmp == NULL) {
-                tmp = x;
+            Tree *y = NULL;
+            if (x->left != NULL) {
+                y = x->left;
+            } else {
+                y = x->right;
+            }
+            if (y == NULL) {
+                y = x;
                 x = NULL;
             } else {
-                *x = *tmp;
+                *x = *y;
             }
-            delete tmp;
+            std::cout << "OK\n";
+            delete y;
         } else {
-            Node *tmp = x->sucsessor();
-            x->key = tmp->key;
-            x->value = tmp->value;
-            x->right = this->erace(x->right, tmp->key.data); 
+            Tree *y = successor(x);
+            x->key = y->key;
+            x->value = y->value;
+            x->right = erace(x->right, y->key);
         }
     }
     if (x == NULL) {
         return x;
     }
-    x->height = 1 + max(x->left->getHeight(), x->right->getHeight());
-    int balance = x->balance();
-    if (balance > 1) {
-        if (x->right->balance() <= 0) {
-            return x->rightRotate();
-        } else {
-            x->right = x->right->leftRotate();
-            return x->rightRotate();
+    if (getHeight(x->left) > getHeight(x->right)) {
+        x->height = getHeight(x->left) + 1;
+    } else {
+        x->height = getHeight(x->right) + 1;
+    }
+    if (balance(x) > 1) {
+        if (balance(x->right) <= 0) {
+            return rightRotate(x);
+        } else if (key > x->left->key) {
+            x->left = leftRotate(x->left);
+            return rightRotate(x);
         }
     }
-    if (balance < -1) {
-        if (x->right->balance() <= 0) {
-            return x->leftRotate();
-        } else {
-            x->right = x->right->rightRotate();
-            return x->leftRotate();
+    if (balance(x) < -1) {
+        if (balance(x->right) <= 0) {
+            return leftRotate(x);
+        } else if (key < x->right->key) {
+            x->right = rightRotate(x->right);
+            return leftRotate(x);
         }
     }
     return x;
 }
 
-void Tree::print()
-{
-    this->print(this->root, 0);
+void Tree::print(Tree *x, int depth) {
+    if (x) {
+        for (int i = 0; i < depth; i++) {
+            std::cout << "\t";
+        }
+        std::cout << x->key << ":" << x->value << "^" << x->balance(x) << "\n";
+        print(x->right, depth + 1);
+        print(x->left, depth + 1);
+    }
 }
 
-void Tree::print(Node *x, int depth)
-{
-    if (x == NULL) {
-        return;
-    }
-    for (int i = 0; i < depth; i++) {
-        printf("\t");
-    }
-    printf("%s:%llu^%d\n", x->key.data, x->value, x->balance());
-    this->print(x->left, depth + 1);
-    this->print(x->right, depth + 1);
-}
-
-Node *Tree::destroy(Node *x)
+Tree *Tree::destroy(Tree *x)
 {
     if (x == NULL) {
         return x;
     }
-    if (x->left == NULL && x->right == NULL) {
-        
+    if (x->left == NULL && x->right == NULL) {  
         delete x;
         return NULL;
     }
@@ -327,69 +346,31 @@ Node *Tree::destroy(Node *x)
     return destroy(x);
 }
 
-bool Tree::save(char *fileName)
-{
-    FILE* f = fopen(fileName, "wb");
-    if (f == NULL) {
-        return false;
-    }
-    if (this->root == NULL) {
-        if (fwrite(&END, sizeof(char), 1, f) != 1) {
-            return false;
-        }
-        return true;
-    }
-    bool check = save(f, this->root);
-    fclose(f);
-    return check;
-}
-
-bool Tree::save(FILE *f, Node *x)
+void Tree::save(Tree *x, FILE *f)
 {
     if (x == NULL) {
-        if (fwrite(&END, sizeof(char), 1, f) != 1) {
-            return false;
-        }
-        return true;
+        fwrite(&END, sizeof(char), 1, f);
+        return;
     }
-    size_t sz = strlen(x->key.data);
+    size_t sz = x->key.size();
     fwrite(&NODE, sizeof(char), 1, f);
     fwrite(&sz, sizeof(sz), 1, f);
     fwrite(x->key.data, sizeof(char), sz, f);
     fwrite(&x->value, sizeof(unsigned long long), 1, f);
     fwrite(&x->height, sizeof(int), 1, f);
-    if (!save(f, x->left)) {
-        return false;
-    }
-    if (!save(f, x->right)) {
-        return false;
-    }
-    return true;
+    save(x->left, f);
+    save(x->right, f);
 }
-
-bool Tree::load(char *fileName)
+Tree::~Tree()
 {
-    FILE* f = fopen(fileName, "rb");
-    if (f == NULL) {
-        fclose(f);
-        return false;
-    }
-    if (this->root != NULL) {
-        this->destroy(this->root);
-        this->root = NULL;
-    }
-    bool check = load(f, root);
-    fclose(f);
-    return check;
 }
 
-bool Tree::load(FILE *f, Node *&x)
+void Tree::load(Tree *&x, FILE *f)
 {
     char c;
     size_t data = fread(&c, sizeof(char), 1, f);
     if (c == NODE) {
-        char *k = new char[257];
-        memset(k, '\0', 256);
+        char k[257] = {'\0'};
         unsigned long long value;
         size_t sz;
         int height;
@@ -399,116 +380,59 @@ bool Tree::load(FILE *f, Node *&x)
         data = fread(&height, sizeof(int), 1, f);
         for (int i = 1; i < data; i *= 1000) {};
         String key(k);
-        x = new Node(key, value);
-        x->height = height; 
+        x = new Tree(key, value);
+        x->height = height;
     } else {
-        return true;
+        return;
     }
-    if (!load(f, x->left)) {
-        return false;
-    }
-    if (!load(f, x->right)) {
-        return false;
-    }
-    return true;
+    load(x->left, f);
+    load(x->right, f);
 }
-
-Tree::Tree()
-{
-    root = NULL;
-}
-
-Tree::~Tree()
-{
-    this->destroy(root);
-    root = NULL;
-}
-
-// int main
 
 int main(int argc, char const *argv[])
 {
-    Tree *t = new Tree();
-    char command;
-    char *key = new char[257];
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0);
+    std::cout.tie(0);
+    String command;
+    Tree *t = NULL;
     while (std::cin >> command) {
-        memset(key, '\0', 257);
-        if (command == '+') {
-            unsigned long long int value;
-            std::cin >> key >> value;
-            for (int i = 0; i < 257; i++) {
-                key[i] = tolower(key[i]);
-            }
-            Node *x = t->find(key);
-            if (x == NULL) {
-                String Key(key);
-                t->insert(Key, value);
+        if (strcmp(command.data, "+") == 0) {
+            unsigned long long value;
+            std::cin >> command >> value;
+            t = t->insert(t, command, value);
+        } else if (strcmp(command.data, "-") == 0) {
+            std::cin >> command;
+            t = t->erace(t, command);
+        } else if (strcmp(command.data, "!") == 0) {
+            std::cin >> command;
+            if (strcmp(command.data, "save") == 0) {
+                std::cin >> command;
+                FILE *f = fopen(command.data, "wb");
+                t->save(t, f);
+                fclose(f);
                 std::cout << "OK\n";
             } else {
-                std::cout << "Exists\n";
-            }
-        } else if (command == '-') {
-            std::cin >> key;
-            for (int i = 0; i < 257; i++) {
-                key[i] = tolower(key[i]);
-            }
-            Node *x = t->find(key);
-            if (x == NULL) {
-                std::cout << "NoSuchWord\n";
-            } else {
-                t->erace(key);
-                std::cout << "OK\n";
-            }
-        } else if (command == '!') {
-            std::cin.get(command);
-            std::cin.get(command);
-            if (command == 'S') {
-                while (std::cin.get(command)) {
-                    if (command == ' ') {
-                        break;
-                    }
-                }
-                std::cin >> key;
-                t->save(key);
-                std::cout << "OK\n";
-            } else if (command == 'L') {
-                while (std::cin.get(command)) {
-                    if (command == ' ') {
-                        break;
-                    }
-                }
-                std::cin >> key;
-                if (t->load(key)) {
+                std::cin >> command;
+                FILE *f = fopen(command.data, "rb");
+                if (f == NULL) {
+                    t->destroy(t);
+                    t = NULL;
                 } else {
-                    t->destroy(t->root);
-                    t->root = NULL;
+                    if (t != NULL) {
+                        t->destroy(t);
+                        t = NULL;
+                    }
+                    t->load(t, f);
+                    fclose(f);
                 }
                 std::cout << "OK\n";
             }
-        } else if (isalpha(command)) {
-            key[0] = command;
-            int iter = 1;
-            while (std::cin.get(command)) {
-                if (command == '\n') {
-                    break;
-                }
-                key[iter] = command;
-                iter++;
-            }
-            for (int i = 0; i < 257; i++) {
-                key[i] = tolower(key[i]);
-            }
-            Node *x = t->find(key);
-            if (x == NULL) {
-                std::cout << "NoSuchWord\n";
-            } else {
-                std::cout << "OK: " << x->value << "\n";
-            }
-        } else if (command == '>') {
-            t->print();
+        } else {
+            bool x = t->find(t, command);
         }
+        // t->print(t, 0);
     }
-    delete[] key;
-    delete t;
+    t->destroy(t);
     return 0;
 }
