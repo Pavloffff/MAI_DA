@@ -361,9 +361,6 @@ void Tree::save(Tree *x, FILE *f)
     save(x->left, f);
     save(x->right, f);
 }
-Tree::~Tree()
-{
-}
 
 void Tree::load(Tree *&x, FILE *f)
 {
@@ -387,6 +384,10 @@ void Tree::load(Tree *&x, FILE *f)
     }
     load(x->left, f);
     load(x->right, f);
+}
+
+Tree::~Tree()
+{
 }
 
 int main(int argc, char const *argv[])
