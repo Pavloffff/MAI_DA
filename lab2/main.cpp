@@ -72,12 +72,24 @@ String &String::operator=(const char *s)
 
 bool String::operator<(const String &s) const
 {
-    return strcmp(data, s.data) < 0;
+    int size = sz < s.sz ? sz : s.sz;
+    for (int i = 0; i < size; ++i) {
+        if (data[i] != s.data[i]) {
+            return data[i] < s.data[i];
+        }
+    }
+    return sz < s.sz;
 }
 
 bool String::operator>(const String &s) const
 {
-    return strcmp(data, s.data) > 0;
+    int size = sz < s.sz ? sz : s.sz;
+    for (int i = 0; i < size; ++i) {
+        if (data[i] != s.data[i]) {
+            return data[i] > s.data[i];
+        }
+    }
+    return sz > s.sz;
 }
 
 String::~String()
@@ -112,20 +124,8 @@ public:
     Tree *left;
     Tree *right;
     unsigned int height;
-    int getHeight(Tree *x);
-    int balance(Tree *x);
-    Tree *leftRotate(Tree *x);
-    Tree *rightRotate(Tree *x);
-    Tree *successor(Tree *x);
-    bool find(Tree *x, String &key);
-    Tree *insert(Tree *x, String &key, unsigned long long value);
-    Tree *erace(Tree *x, String &key);
-    void save(Tree *x, FILE *f);
-    void load(Tree *&x, FILE *f);
-    void print(Tree *x, int depth);
-    Tree *destroy(Tree *x);
     Tree();
-    Tree(String &key, unsigned long long value);
+    Tree(const String &key, unsigned long long value);
     ~Tree();
 };
 
@@ -133,7 +133,7 @@ Tree::Tree()
 {
 }
 
-Tree::Tree(String &key, unsigned long long value)
+Tree::Tree(const String &key, unsigned long long value)
 {
     this->key = key;
     this->value = value;
@@ -142,7 +142,11 @@ Tree::Tree(String &key, unsigned long long value)
     this->height = 1;
 }
 
-int Tree::getHeight(Tree *x)
+Tree::~Tree()
+{
+}
+
+int getHeight(Tree *x)
 {
     if (!x) {
         return 0;
@@ -150,7 +154,7 @@ int Tree::getHeight(Tree *x)
     return x->height;
 }
 
-Tree *Tree::leftRotate(Tree *x)
+Tree *leftRotate(Tree *x)
 {
     Tree *y = x->right;
     x->right = y->left;
@@ -168,7 +172,7 @@ Tree *Tree::leftRotate(Tree *x)
     return y;
 }
 
-Tree *Tree::rightRotate(Tree *x)
+Tree *rightRotate(Tree *x)
 {
     Tree *y = x->left;
     x->left = y->right;
@@ -186,23 +190,7 @@ Tree *Tree::rightRotate(Tree *x)
     return y;
 }
 
-Tree *Tree::successor(Tree *x)
-{
-    if (x == NULL) {
-        return x;
-    }
-    Tree *y = x->right;
-    if (y == NULL) {
-        return x;
-    } else {
-        while (y->left != NULL) {
-            y = y->left;
-        }
-        return y;
-    }
-}
-
-bool Tree::find(Tree *x, String &key)
+bool find(Tree *x, String &key)
 {
     if (x == NULL) {
         std::cout << "NoSuchWord\n";
@@ -217,7 +205,7 @@ bool Tree::find(Tree *x, String &key)
     }
 }
 
-int Tree::balance(Tree *x)
+int balance(Tree *x)
 {
     if (x == NULL) {
         return 0;
@@ -225,7 +213,7 @@ int Tree::balance(Tree *x)
     return getHeight(x->left) - getHeight(x->right);
 }
 
-Tree *Tree::insert(Tree *x, String &key, unsigned long long value)
+Tree *insert(Tree *x, String &key, unsigned long long value)
 {
     if (x == NULL) {
         std::cout << "OK\n";
@@ -244,25 +232,56 @@ Tree *Tree::insert(Tree *x, String &key, unsigned long long value)
         x->height = getHeight(x->right) + 1;
     }
     if (balance(x) > 1) {
-        if (balance(x->right) <= 0) {
-            return rightRotate(x);
-        } else if (key > x->left->key) {
+        if (balance(x->left) < 0) {
             x->left = leftRotate(x->left);
-            return rightRotate(x);
         }
-    }
-    if (balance(x) < -1) {
-        if (balance(x->right) <= 0) {
-            return leftRotate(x);
-        } else if (key < x->right->key) {
+        return rightRotate(x);
+    } else if (balance(x) < -1) {
+        if (balance(x->right) > 0) {
             x->right = rightRotate(x->right);
-            return leftRotate(x);
         }
+        return leftRotate(x);
     }
     return x;
 }
 
-Tree *Tree::erace(Tree *x, String &key)
+Tree *successor(Tree *x)
+{
+    Tree *y = x->right;
+    while (y->left != NULL) {
+        y = y->left;
+    }
+    return y;
+}
+
+Tree *eraceMinimalNode(Tree *x)
+{
+    if (!x->left) {
+        Tree *y = x->right;
+        delete x;
+        return y;
+    }
+    x->left = eraceMinimalNode(x->left);
+    if (getHeight(x->left) > getHeight(x->right)) {
+        x->height = getHeight(x->left) + 1;
+    } else {
+        x->height = getHeight(x->right) + 1;
+    }
+    if (balance(x) > 1) {
+        if (balance(x->left) < 0) {
+            x->left = leftRotate(x->left);
+        }
+        return rightRotate(x);
+    } else if (balance(x) < -1) {
+        if (balance(x->right) > 0) {
+            x->right = rightRotate(x->right);
+        }
+        return leftRotate(x);
+    }
+    return x;
+}
+
+Tree *erace(Tree *x, String &key)
 {
     if (x == NULL) {
         std::cout << "NoSuchWord\n";
@@ -272,30 +291,21 @@ Tree *Tree::erace(Tree *x, String &key)
     } else if (key > x->key) {
         x->right = erace(x->right, key);
     } else {
-        if (x->left == NULL || x->right == NULL) {
-            Tree *y = NULL;
-            if (x->left != NULL) {
-                y = x->left;
-            } else {
-                y = x->right;
-            }
-            if (y == NULL) {
-                y = x;
-                x = NULL;
-            } else {
-                *x = *y;
-            }
+        if (x->left == NULL && x->right == NULL) {
             std::cout << "OK\n";
-            delete y;
-        } else {
-            Tree *y = successor(x);
-            x->key = y->key;
-            x->value = y->value;
-            x->right = erace(x->right, y->key);
+            delete x;
+            return NULL;
         }
-    }
-    if (x == NULL) {
-        return x;
+        if (!x->right) {
+            Tree *y = x->left;
+            std::cout << "OK\n";
+            delete x;
+            return y;
+        }
+        x->key = successor(x)->key;
+        x->value = successor(x)->value;
+        x->right = eraceMinimalNode(x->right);
+        std::cout << "OK\n";
     }
     if (getHeight(x->left) > getHeight(x->right)) {
         x->height = getHeight(x->left) + 1;
@@ -303,36 +313,32 @@ Tree *Tree::erace(Tree *x, String &key)
         x->height = getHeight(x->right) + 1;
     }
     if (balance(x) > 1) {
-        if (balance(x->right) <= 0) {
-            return rightRotate(x);
-        } else if (key > x->left->key) {
+        if (balance(x->left) < 0) {
             x->left = leftRotate(x->left);
-            return rightRotate(x);
         }
-    }
-    if (balance(x) < -1) {
-        if (balance(x->right) <= 0) {
-            return leftRotate(x);
-        } else if (key < x->right->key) {
+        return rightRotate(x);
+    } else if (balance(x) < -1) {
+        if (balance(x->right) > 0) {
             x->right = rightRotate(x->right);
-            return leftRotate(x);
         }
+        return leftRotate(x);
     }
     return x;
 }
 
-void Tree::print(Tree *x, int depth) {
+void print(Tree *x, int depth)
+{
     if (x) {
         for (int i = 0; i < depth; i++) {
             std::cout << "\t";
         }
-        std::cout << x->key << ":" << x->value << "^" << x->balance(x) << "\n";
+        std::cout << x->key << ":" << x->value << "^" << balance(x) << "\n";
         print(x->right, depth + 1);
         print(x->left, depth + 1);
     }
 }
 
-Tree *Tree::destroy(Tree *x)
+Tree *destroy(Tree *x)
 {
     if (x == NULL) {
         return x;
@@ -341,12 +347,12 @@ Tree *Tree::destroy(Tree *x)
         delete x;
         return NULL;
     }
-    x->left = this->destroy(x->left);
-    x->right = this->destroy(x->right);
+    x->left = destroy(x->left);
+    x->right = destroy(x->right);
     return destroy(x);
 }
 
-void Tree::save(Tree *x, FILE *f)
+void save(Tree *x, FILE *f)
 {
     if (x == NULL) {
         fwrite(&END, sizeof(char), 1, f);
@@ -362,7 +368,7 @@ void Tree::save(Tree *x, FILE *f)
     save(x->right, f);
 }
 
-void Tree::load(Tree *&x, FILE *f)
+void load(Tree *&x, FILE *f)
 {
     char c;
     size_t data = fread(&c, sizeof(char), 1, f);
@@ -375,7 +381,6 @@ void Tree::load(Tree *&x, FILE *f)
         data = fread(k, sizeof(char), sz, f);
         data = fread(&value, sizeof(unsigned long long), 1, f);
         data = fread(&height, sizeof(int), 1, f);
-        for (int i = 1; i < data; i *= 1000) {};
         String key(k);
         x = new Tree(key, value);
         x->height = height;
@@ -384,10 +389,6 @@ void Tree::load(Tree *&x, FILE *f)
     }
     load(x->left, f);
     load(x->right, f);
-}
-
-Tree::~Tree()
-{
 }
 
 int main(int argc, char const *argv[])
@@ -401,39 +402,41 @@ int main(int argc, char const *argv[])
         if (strcmp(command.data, "+") == 0) {
             unsigned long long value;
             std::cin >> command >> value;
-            t = t->insert(t, command, value);
+            t = insert(t, command, value);
         } else if (strcmp(command.data, "-") == 0) {
             std::cin >> command;
-            t = t->erace(t, command);
+            t = erace(t, command);
         } else if (strcmp(command.data, "!") == 0) {
             std::cin >> command;
             if (strcmp(command.data, "save") == 0) {
                 std::cin >> command;
                 FILE *f = fopen(command.data, "wb");
-                t->save(t, f);
-                fclose(f);
+                if (f != NULL) {
+                    save(t, f);
+                    fclose(f);
+                }
                 std::cout << "OK\n";
             } else {
                 std::cin >> command;
                 FILE *f = fopen(command.data, "rb");
                 if (f == NULL) {
-                    t->destroy(t);
+                    destroy(t);
                     t = NULL;
                 } else {
                     if (t != NULL) {
-                        t->destroy(t);
+                        destroy(t);
                         t = NULL;
                     }
-                    t->load(t, f);
+                    load(t, f);
                     fclose(f);
                 }
                 std::cout << "OK\n";
             }
         } else {
-            bool x = t->find(t, command);
+            bool x = find(t, command);
         }
-        // t->print(t, 0);
+        // print(t, 0);
     }
-    t->destroy(t);
+    destroy(t);
     return 0;
 }
