@@ -309,6 +309,35 @@ int main(int argc, char const *argv[])
     timer.stop();
     std::cout << "time of insertion of std::map with " << n << " elements: " << timer.time() << "\n";
     
+    fseek(file, 0, SEEK_SET);
+    fscanf(file, "%d", &n);
+
+    timer.start();
+    for (int i = 0; i < n; i++) {
+        unsigned long long number;
+        char s[257];
+        fscanf(file, "%s", s);
+        fscanf(file, "%llu", &number);
+        String str(s);
+        find(AVL, str);
+    }
+    timer.stop();
+    std::cout << "time of searching of AVL-tree with " << n << " elements: " << timer.time() << "\n";
+    
+    fseek(file, 0, SEEK_SET);
+    fscanf(file, "%d", &n);
+    
+    timer.start();
+    for (int i = 0; i < n; i++) {
+        unsigned long long number;
+        char s[257];
+        fscanf(file, "%s", s);
+        fscanf(file, "%llu", &number);
+        String str(s);
+        RBT.find(str);
+    }
+    timer.stop();
+    std::cout << "time of searching of std::map with " << n << " elements: " << timer.time() << "\n";
 
     fseek(file, 0, SEEK_SET);
     fscanf(file, "%d", &n);
