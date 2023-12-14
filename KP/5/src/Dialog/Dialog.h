@@ -1,11 +1,13 @@
 #pragma once
 
 #include <vector>
+#include <iomanip>
 #include <filesystem>
 
 #include "ArgParser.h"
 #include "../Arifm/Arifm.h"
 #include "../Lzw/Lzw.h"
+
 
 namespace Dialog
 {
@@ -14,7 +16,9 @@ namespace Dialog
     private:
         std::string extension = "slzw";
         std::string progName;
-        bool uncompress = false;
+        bool keep = false;
+        bool check = false;
+        bool lFirst = true;
         std::set<std::string> defaultFlags;
         std::set<std::string> argSet;
     public:

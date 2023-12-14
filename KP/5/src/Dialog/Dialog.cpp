@@ -1,25 +1,72 @@
 #include "Dialog.h"
 
-bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileName)
+bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileName) // TODO добавить -c (вывод в stdout) и - (ввод из stdin) 
 {
-    if (flags.find("-d") != flags.end()) {
+    if (flags.find("-k") != flags.end()) {
+        keep = true;
+    }
+    if (flags.find("-t") != flags.end()) {  // TODO при добавлении LZW пересмотреть
         if (fileName.substr(fileName.find_last_of(".") + 1) != extension) {
-            std::string msg = progName + ": " + fileName + ": unknown suffix -- ignored";
-            std::cerr << msg << std::endl;
-            return false;
+            std::string msg = progName + ": " + fileName + ": not in " + extension + " format";
+            throw Dialog::Exception(msg);
         }
-        uncompress = true;
+        check = true;
+        Arifm::Compressor arifmCompressor(fileName, true);
+        bool res = arifmCompressor.Uncompress();
+        std::string tmpFileName = fileName.substr(0, fileName.find_last_of("."));
+        std::filesystem::remove(tmpFileName);
+        if (!res) {
+            std::string msg = progName + ": " + fileName + ": failed integrity check -- invalid archive";
+            throw Dialog::Exception(msg);
+        }
     }
     if (flags.find("-l") != flags.end()) {
         if (fileName.substr(fileName.find_last_of(".") + 1) != extension) {
             std::string msg = progName + ": " + fileName + ": not in " + extension + " format";
             throw Dialog::Exception(msg);
         }
-        // TODO : вот тут cout заголовка с флагом -l (сжимаем не тут а ниже):
-        //  compressed        uncompressed  ratio uncompressed_name
-        //       30758               32206   4.6% algo.odt
+        if (lFirst) {
+            std::cout << std::right << std::setw(20) << "compressed"
+                << std::right << std::setw(20) << "uncompressed"
+                << std::setw(20) << "ratio"
+                << std::setw(20) << "uncompressed_name" << std::endl;
+            lFirst = false;
+        }
+        check = true;
+        Arifm::Compressor arifmCompressor(fileName, true);
+        bool res = arifmCompressor.Uncompress();
+        std::string tmpFileName = fileName.substr(0, fileName.find_last_of("."));
+        size_t compressedSize = std::filesystem::file_size(fileName);
+        size_t uncompressedSize = std::filesystem::file_size(tmpFileName);
+        double ratio = ((double) compressedSize / (double) uncompressedSize) * 100;
+        std::cout << std::fixed << std::setprecision(2);
+        std::cout << std::right << std::setw(20) << compressedSize
+                  << std::right << std::setw(20) << uncompressedSize
+                  << std::setw(20) << ratio
+                  << std::setw(20) << tmpFileName << std::endl;
+        std::filesystem::remove(tmpFileName);
     }
-    return true;
+    if (flags.find("-d") != flags.end()) {
+        if (fileName.substr(fileName.find_last_of(".") + 1) != extension) {
+            std::string msg = progName + ": " + fileName + ": unknown suffix -- ignored";
+            return false;
+        }
+        Arifm::Compressor arifmCompressor(fileName, true);
+        bool res = arifmCompressor.Uncompress();
+        if (!keep) {
+            std::filesystem::remove(fileName);
+        }
+        return res;
+    }
+    if (!check) {
+        Arifm::Compressor arifmCompressor(fileName, false);
+        bool res = arifmCompressor.Compress();
+        if (!keep) {
+            std::filesystem::remove(fileName);
+        }
+        return res;
+    }
+    return false;
 }
 
 void Dialog::Archiver::Run()
@@ -55,37 +102,22 @@ void Dialog::Archiver::Run()
                         std::string entryFileName;
                         sstream >> entryFileName;
                         entryFileName = entryFileName.substr(1, entryFileName.size() - 2);
-                        if (!TryFlags(flags, entryFileName)) continue;
-                        std::cout << entryFileName << std::endl;
-
-                        // TODO: сжать все файлы внутри, если они не директории
-                    
+                        std::filesystem::path entryFilePath(entryFileName);
+                        if (!std::filesystem::is_directory(entryFilePath, ec)) {
+                            if (!TryFlags(flags, entryFileName)) {
+                                continue;
+                            }
+                        }
                     }
                 }
-                continue;
+            } else {
+                if (!TryFlags(flags, fileName)) {
+                    continue;
+                }
             }
-            // if (ec) {
-            //     throw Dialog::Exception(progName + ": " + ec.message());
-            // }
-            if (!TryFlags(flags, fileName)) continue;
-
-
-            // TODO: архивируем здесь
-
-
-            // std::ifstream input(fileName);
-            // std::ofstream output(fileName + ".slzw");
-            // char c;
-            // int iter = 0;
-            // while (input >> std::noskipws >> c) {
-            //     // std::cout << c << std::endl;
-            //     iter++;
-            //     output << c;
-            // }
-            // std::cout << iter << std::endl;
-            // input.close();
-            // output.close();    
-            std::cout << fileName << "\n";
+            if (ec) {
+                throw Dialog::Exception(progName + ": " + ec.message());
+            }
         }
     } catch (const Dialog::Exception &ex) {
         Dialog::Exception::LogException(ex);
