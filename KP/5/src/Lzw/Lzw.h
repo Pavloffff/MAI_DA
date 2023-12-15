@@ -17,13 +17,12 @@ namespace LZW
         bool uncompress = false;
         bool consoleInput = false;
         bool consoleOutput = false;
-        std::unordered_map<int, std::string> uncompressDict;
-        std::unordered_map<std::string, int> compressDict;
+        std::unordered_map<uint32_t, std::string> uncompressDict;
+        std::unordered_map<std::string, uint32_t> compressDict;
         int64_t code;
         uint32_t numBits;
     public:
         void InitDict();
-        void PrintDict();
         bool Uncompress();
         bool Compress();
         Compressor(std::string &fileName, 

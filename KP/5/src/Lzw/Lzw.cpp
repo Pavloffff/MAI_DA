@@ -16,21 +16,8 @@ void LZW::Compressor::InitDict()
             this->compressDict[tmpStr] = i;
         }
     }
-    code = 256;
+    code = 258;
     numBits = 9;
-}
-
-void LZW::Compressor::PrintDict()
-{
-    if (uncompress) {
-        for (auto i : uncompressDict) {
-            std::cout << i.first << ":\t" << i.second << "\n";
-        }
-    } else {
-        for (auto i : compressDict) {
-            std::cout << i.first << ":\t" << i.second << "\n";
-        }
-    }
 }
 
 bool LZW::Compressor::Uncompress()
@@ -51,8 +38,7 @@ bool LZW::Compressor::Uncompress()
 
     std::ifstream input(fileName);
     BitStream::IStream bitInput(input);
-    // std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
-    std::string outputFileName = "2.txt";
+    std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
     std::ofstream output(outputFileName);
     std::vector<uint8_t> buffer(4);
     input.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
@@ -75,19 +61,36 @@ bool LZW::Compressor::Uncompress()
             }
             codesI = codesI << 1 | bit;
         }
-        if (uncompressDict.find(codesI) != uncompressDict.end()) {
-            uncompressDict[code++] = uncompressDict[prev] + uncompressDict[codesI][0];
+        if (codesI == 256) {
+            uncompressDict.clear();
+            InitDict();
+            prev = 0;
+            for (int i = 0; i < numBits; i++) {
+                int bit = bitInput.read();
+                if (bit == -1) {
+                    bit = 0;
+                }
+                prev = prev << 1 | bit;
+            }
+            if (prev == 257) {
+                break;
+            }
+            output.write(uncompressDict[prev].c_str(), uncompressDict[prev].size());
         } else {
-            uncompressDict[code++] = uncompressDict[prev] + uncompressDict[prev][0];
+            if (uncompressDict.find(codesI) != uncompressDict.end()) {
+                uncompressDict[code++] = uncompressDict[prev] + uncompressDict[codesI][0];
+            } else {
+                uncompressDict[code++] = uncompressDict[prev] + uncompressDict[prev][0];
+            }
+            prev = codesI;
+            if (code + 1 == Utils::BinPow(2, numBits)) {
+                numBits++;
+            }
+            if (codesI == 257) {
+                break;
+            }
+            output.write(uncompressDict[codesI].c_str(), uncompressDict[codesI].size());
         }
-        prev = codesI;
-        if (code + 1 == Utils::BinPow(2, numBits)) {
-            numBits++;
-        }
-        if (codesI == 255) {
-            break;
-        }
-        output.write(uncompressDict[codesI].c_str(), uncompressDict[codesI].size());
     }
     input.close();
     output.close();
@@ -139,6 +142,15 @@ bool LZW::Compressor::Compress()
             if (code == Utils::BinPow(2, numBits)) {
                 numBits++;
             }
+            if (numBits == 16) { // TODO тут число поменять на переменную
+                uint32_t cls = 256;
+                for (int i = numBits - 1; i >= 0; i--) {
+                    bitOutput.write((cls >> i) & 1);
+                }
+                compressDict.clear();
+                InitDict();
+                numBits = 9;
+            }
             tmpStr = symbol;
         }
     }
@@ -147,7 +159,11 @@ bool LZW::Compressor::Compress()
             bitOutput.write((compressDict[tmpStr] >> i) & 1);
         }
     }
-    bitOutput.fillOnes();
+    uint32_t eof = 257;
+    for (int i = numBits - 1; i >= 0; i--) {
+        bitOutput.write((eof >> i) & 1);
+    }
+    bitOutput.fillZeros();
     input.close();
     output.close();
 
