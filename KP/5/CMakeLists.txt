@@ -22,6 +22,8 @@ add_executable(${PROJECT_NAME}
     src/Dialog/Exception.h
     src/Utils/BitStream.cpp
     src/Utils/BitStream.h
+    src/Utils/Utils.cpp
+    src/Utils/Utils.h
 )
 
 find_package(ZLIB REQUIRED)

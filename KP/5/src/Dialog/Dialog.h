@@ -19,6 +19,8 @@ namespace Dialog
         bool keep = false;
         bool check = false;
         bool lFirst = true;
+        bool consoleInput = false;
+        bool consoleOutput = false;
         std::set<std::string> defaultFlags;
         std::set<std::string> argSet;
     public:

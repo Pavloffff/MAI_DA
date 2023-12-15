@@ -1,7 +1,16 @@
 #include "Dialog.h"
 
-bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileName) // TODO добавить -c (вывод в stdout) и - (ввод из stdin) 
+bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileName)
 {
+    if (fileName == "-") {
+        consoleInput = true;
+    } else {
+        consoleInput = false;
+    }
+    if (flags.find("-c") != flags.end()) {
+        keep = true;
+        consoleOutput = true;
+    }
     if (flags.find("-k") != flags.end()) {
         keep = true;
     }
@@ -11,7 +20,7 @@ bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileN
             throw Dialog::Exception(msg);
         }
         check = true;
-        Arifm::Compressor arifmCompressor(fileName, true);
+        Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
         bool res = arifmCompressor.Uncompress();
         std::string tmpFileName = fileName.substr(0, fileName.find_last_of("."));
         std::filesystem::remove(tmpFileName);
@@ -33,7 +42,7 @@ bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileN
             lFirst = false;
         }
         check = true;
-        Arifm::Compressor arifmCompressor(fileName, true);
+        Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
         bool res = arifmCompressor.Uncompress();
         std::string tmpFileName = fileName.substr(0, fileName.find_last_of("."));
         size_t compressedSize = std::filesystem::file_size(fileName);
@@ -51,7 +60,7 @@ bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileN
             std::string msg = progName + ": " + fileName + ": unknown suffix -- ignored";
             return false;
         }
-        Arifm::Compressor arifmCompressor(fileName, true);
+        Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
         bool res = arifmCompressor.Uncompress();
         if (!keep) {
             std::filesystem::remove(fileName);
@@ -59,7 +68,7 @@ bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileN
         return res;
     }
     if (!check) {
-        Arifm::Compressor arifmCompressor(fileName, false);
+        Arifm::Compressor arifmCompressor(fileName, false, consoleInput, consoleOutput);
         bool res = arifmCompressor.Compress();
         if (!keep) {
             std::filesystem::remove(fileName);
@@ -115,9 +124,9 @@ void Dialog::Archiver::Run()
                     continue;
                 }
             }
-            if (ec) {
-                throw Dialog::Exception(progName + ": " + ec.message());
-            }
+            // if (ec) {
+            //     throw Dialog::Exception(progName + ": " + ec.message());
+            // }
         }
     } catch (const Dialog::Exception &ex) {
         Dialog::Exception::LogException(ex);

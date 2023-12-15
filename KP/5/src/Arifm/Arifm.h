@@ -6,9 +6,9 @@
 #include <set>
 #include <vector>
 #include <limits>
-#include <zlib.h>
 #include "Frequency.h"
 #include "../Utils/BitStream.h"
+#include "../Utils/Utils.h"
 
 namespace Arifm
 {
@@ -17,6 +17,8 @@ namespace Arifm
     private:
         std::string fileName;
         bool uncompress = false;
+        bool consoleInput = false;
+        bool consoleOutput = false;
         uint64_t length = 0;
         std::vector<int> frequency;
         uint64_t max;
@@ -30,10 +32,9 @@ namespace Arifm
         uint64_t right;
         uint64_t code;
     public:
-        uint32_t CalculateCRC32(std::string &fileName);
         bool Uncompress();
         bool Compress();
-        Compressor(std::string &fileName, bool uncompress);
+        Compressor(std::string &fileName, bool uncompress, bool consileInput, bool consoleOutput);
         Compressor();
         ~Compressor();
     };

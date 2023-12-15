@@ -18,7 +18,7 @@ std::set<std::string> Dialog::ArgParser::Parse(int argc, char **argv)
                     if (std::string(argv[i]).substr(0, 1) == "-") {
                         throw Dialog::Exception(msg);
                     } else {
-                        std::cerr << argv[0] << ": [" << argv[i] << std::string("]: No such file or directory") << std::endl;
+                        std::cerr << argv[0] << ": [" << argv[i] << std::string("]: No such file or directory123") << std::endl;
                         fileExists.close();
                         continue;
                     }
