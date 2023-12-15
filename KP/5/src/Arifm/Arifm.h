@@ -34,7 +34,10 @@ namespace Arifm
     public:
         bool Uncompress();
         bool Compress();
-        Compressor(std::string &fileName, bool uncompress, bool consileInput, bool consoleOutput);
+        Compressor(std::string &fileName, 
+                   bool uncompress, 
+                   bool consoleInput, 
+                   bool consoleOutput);
         Compressor();
         ~Compressor();
     };

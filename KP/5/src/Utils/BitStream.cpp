@@ -52,3 +52,11 @@ void BitStream::OStream::fillZeros()
         write(0);
     }
 }
+
+void BitStream::OStream::fillOnes()
+{
+    while (leftBits != 0) {
+        write(1);
+    }
+    stream.put(255);
+}

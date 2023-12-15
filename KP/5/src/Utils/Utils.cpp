@@ -6,6 +6,19 @@
 #include <vector>
 #include <zlib.h>
 
+uint64_t Utils::BinPow(uint64_t x, uint64_t y)
+{
+    uint64_t z = 1;
+    while (y > 0) {
+        if (y % 2 != 0) {
+            z = (z * x);
+        }
+        x = (x * x);
+        y /= 2;
+    }
+    return z;
+}
+
 uint32_t Utils::CalculateCRC32(std::string & fileName)
 {
     std::ifstream input(fileName);

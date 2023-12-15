@@ -1,6 +1,6 @@
 #include "Dialog.h"
 
-bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileName)
+bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileName)
 {
     if (fileName == "-") {
         consoleInput = true;
@@ -60,20 +60,24 @@ bool Dialog::Archiver::TryFlags(std::set<std::string> &flags, std::string &fileN
             std::string msg = progName + ": " + fileName + ": unknown suffix -- ignored";
             return false;
         }
-        Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
-        bool res = arifmCompressor.Uncompress();
-        if (!keep) {
-            std::filesystem::remove(fileName);
-        }
-        return res;
+        // Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
+        // bool res = arifmCompressor.Uncompress();
+        // if (!keep) {
+        //     std::filesystem::remove(fileName);
+        // }
+        // return res;
+        LZW::Compressor LZWCompressor(fileName, true, consoleInput, consoleOutput);
+        return LZWCompressor.Uncompress();
     }
     if (!check) {
-        Arifm::Compressor arifmCompressor(fileName, false, consoleInput, consoleOutput);
-        bool res = arifmCompressor.Compress();
-        if (!keep) {
-            std::filesystem::remove(fileName);
-        }
-        return res;
+        // Arifm::Compressor arifmCompressor(fileName, false, consoleInput, consoleOutput);
+        // bool res = arifmCompressor.Compress();
+        // if (!keep) {
+        //     std::filesystem::remove(fileName);
+        // }
+        // return res;
+        LZW::Compressor LZWCompressor(fileName, false, consoleInput, consoleOutput);
+        bool resLZW = LZWCompressor.Compress();
     }
     return false;
 }
@@ -89,6 +93,9 @@ void Dialog::Archiver::Run()
         } else {
             fileNames.push_back(arg);
         }
+    }
+    if (fileNames.empty()) {
+        fileNames.push_back("-");
     }
     
     if (flags.find("-h") != flags.end()) {
@@ -113,14 +120,14 @@ void Dialog::Archiver::Run()
                         entryFileName = entryFileName.substr(1, entryFileName.size() - 2);
                         std::filesystem::path entryFilePath(entryFileName);
                         if (!std::filesystem::is_directory(entryFilePath, ec)) {
-                            if (!TryFlags(flags, entryFileName)) {
+                            if (!Archive(flags, entryFileName)) {
                                 continue;
                             }
                         }
                     }
                 }
             } else {
-                if (!TryFlags(flags, fileName)) {
+                if (!Archive(flags, fileName)) {
                     continue;
                 }
             }

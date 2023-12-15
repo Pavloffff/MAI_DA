@@ -24,7 +24,7 @@ namespace Dialog
         std::set<std::string> defaultFlags;
         std::set<std::string> argSet;
     public:
-        bool TryFlags(std::set<std::string> &flags, std::string &fileName);
+        bool Archive(std::set<std::string> &flags, std::string &fileName);
         void Run();
         void Help();
         Archiver(int argc, char **argv);

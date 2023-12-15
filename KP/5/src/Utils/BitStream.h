@@ -25,5 +25,6 @@ namespace BitStream
         OStream(std::ostream &stream);
         void write(int bit);
         void fillZeros();
+        void fillOnes();
     };
 };
