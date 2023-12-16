@@ -26,16 +26,6 @@ bool LZW::Compressor::Uncompress()
         return false;
     }
 
-    // if (consoleInput) {
-    //     inputFileName = Utils::GenerateRandomString(16);
-    //     std::ofstream tmpFile(inputFileName);
-    //     char c;
-    //     while (std::cin.get(c)) {
-    //         tmpFile.put(c);
-    //     }
-    //     tmpFile.close();
-    // }
-
     std::ifstream input(inputFileName);
     BitStream::IStream bitInput(input);
     std::ofstream output(outputFileName);
