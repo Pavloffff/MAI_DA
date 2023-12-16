@@ -8,8 +8,7 @@ bool Arifm::Compressor::Uncompress()
     }
 
     if (consoleInput) {
-        fileName = Utils::GenerateRandomString(16);
-        std::ofstream tmpFile(fileName);
+        std::ofstream tmpFile(inputFileName);
         char c;
         while (std::cin.get(c)) {
             tmpFile.put(c);
@@ -17,13 +16,13 @@ bool Arifm::Compressor::Uncompress()
         tmpFile.close();
     }
 
-    std::ifstream input(fileName);
-    uint32_t firstChecksum;
-    input.read(reinterpret_cast<char*>(&firstChecksum), sizeof(firstChecksum));
-    
+    std::ifstream input(inputFileName);
     BitStream::IStream bitInput(input);
-    std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
+    uint32_t firstChecksum;
     std::ofstream output(outputFileName);
+    input.read(reinterpret_cast<char*>(&firstChecksum), sizeof(firstChecksum));
+    output.write(reinterpret_cast<const char*>(&firstChecksum), sizeof(firstChecksum));
+    
     Frequency freqs;
 
     for (int i = 0; i < sumRange; i++) {
@@ -79,26 +78,13 @@ bool Arifm::Compressor::Uncompress()
         if (std::numeric_limits<char>::is_signed) {
             byte -= (byte >> 7) << 8;
         }
-        if (consoleOutput) {
-            std::cout << static_cast<char>(byte);
-        } else {
-            output.put(static_cast<char>(byte));
-        }
+        output.put(static_cast<char>(byte));
         freqs.inc(l);
     }
     input.close();
     output.close();
     
-    uint32_t secondChecksum = Utils::CalculateCRC32(outputFileName);
-
-    if (consoleInput) {
-        std::filesystem::remove(fileName);
-    }
-    if (consoleOutput) {
-        std::filesystem::remove(outputFileName);
-    }
-
-    return firstChecksum == secondChecksum;
+    return true;
 }
 
 bool Arifm::Compressor::Compress()
@@ -106,21 +92,15 @@ bool Arifm::Compressor::Compress()
     if (uncompress) {
         return false;
     }
-    if (consoleInput) {
-        fileName = Utils::GenerateRandomString(16);
-        std::ofstream tmpFile(fileName);
-        char c;
-        while (std::cin.get(c)) {
-            tmpFile.put(c);
-        }
-        tmpFile.close();
-    }
-
-    std::ifstream input(fileName);
+    
+    std::ifstream input(inputFileName);
     std::ofstream output;
-    output = std::ofstream(fileName + ".slzw");
-    uint32_t checksum = Utils::CalculateCRC32(fileName);
-    output.write(reinterpret_cast<const char*>(&checksum), sizeof(checksum));
+    output = std::ofstream(outputFileName);
+    
+    uint32_t firstChecksum;
+    input.read(reinterpret_cast<char*>(&firstChecksum), sizeof(firstChecksum));
+    output.write(reinterpret_cast<const char*>(&firstChecksum), sizeof(firstChecksum));
+
     BitStream::OStream bitOutput(consoleOutput ? std::cout : output);
     Frequency freqs;
     while (1) {
@@ -181,17 +161,11 @@ bool Arifm::Compressor::Compress()
     input.close();
     output.close();
 
-    if (consoleInput) {
-        std::filesystem::remove(fileName);
-    }
-    if (consoleOutput) {
-        std::filesystem::remove(fileName + ".slzw");
-    }
-    
     return true;
 }
 
-Arifm::Compressor::Compressor(std::string &fileName, 
+Arifm::Compressor::Compressor(std::string &inputFileName,
+                              std::string &outputFileName,
                               bool uncompress, 
                               bool consoleInput, 
                               bool consoleOutput)
@@ -199,7 +173,8 @@ Arifm::Compressor::Compressor(std::string &fileName,
     this->uncompress = uncompress;
     this->consoleInput = consoleInput;
     this->consoleOutput = consoleOutput;
-    this->fileName = fileName;
+    this->inputFileName = inputFileName;
+    this->outputFileName = outputFileName;
     sumRange = 32;
     max = 1ULL << sumRange;
     half = max >> 1;

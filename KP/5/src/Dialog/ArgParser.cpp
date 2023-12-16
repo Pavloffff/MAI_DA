@@ -1,7 +1,8 @@
 #include "ArgParser.h"
 
-std::set<std::string> Dialog::ArgParser::Parse(int argc, char **argv)
+std::pair<bool, std::set<std::string>> Dialog::ArgParser::Parse(int argc, char **argv)
 {
+    bool check = true;
     std::set<std::string> argSet;
     try {
         for (int i = 1; i < argc; i++) {
@@ -18,6 +19,7 @@ std::set<std::string> Dialog::ArgParser::Parse(int argc, char **argv)
                     if (std::string(argv[i]).substr(0, 1) == "-") {
                         throw Dialog::Exception(msg);
                     } else {
+                        check = false;
                         std::cerr << argv[0] << ": [" << argv[i] << std::string("]: No such file or directory") << std::endl;
                         fileExists.close();
                         continue;
@@ -29,7 +31,7 @@ std::set<std::string> Dialog::ArgParser::Parse(int argc, char **argv)
                 argSet.insert(argv[i]);
             }
         }
-        return argSet;
+        return {check, argSet};
     } catch (const Dialog::Exception &ex) {
         Dialog::Exception::LogException(ex);
         exit(-1);

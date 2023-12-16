@@ -13,7 +13,8 @@ namespace LZW
     class Compressor
     {
     private:
-        std::string fileName;
+        std::string inputFileName;
+        std::string outputFileName;
         bool uncompress = false;
         bool consoleInput = false;
         bool consoleOutput = false;
@@ -25,7 +26,8 @@ namespace LZW
         void InitDict();
         bool Uncompress();
         bool Compress();
-        Compressor(std::string &fileName, 
+        Compressor(std::string &inputFileName,
+                   std::string &outputFileName, 
                    bool uncompress, 
                    bool consoleInput, 
                    bool consoleOutput);

@@ -26,22 +26,21 @@ bool LZW::Compressor::Uncompress()
         return false;
     }
 
-    if (consoleInput) {
-        fileName = Utils::GenerateRandomString(16);
-        std::ofstream tmpFile(fileName);
-        char c;
-        while (std::cin.get(c)) {
-            tmpFile.put(c);
-        }
-        tmpFile.close();
-    }
+    // if (consoleInput) {
+    //     inputFileName = Utils::GenerateRandomString(16);
+    //     std::ofstream tmpFile(inputFileName);
+    //     char c;
+    //     while (std::cin.get(c)) {
+    //         tmpFile.put(c);
+    //     }
+    //     tmpFile.close();
+    // }
 
-    std::ifstream input(fileName);
+    std::ifstream input(inputFileName);
     BitStream::IStream bitInput(input);
-    std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
     std::ofstream output(outputFileName);
-    std::vector<uint8_t> buffer(4);
-    input.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
+    uint32_t firstChecksum;
+    input.read(reinterpret_cast<char*>(&firstChecksum), sizeof(firstChecksum));
 
     int prev = 0;
     for (int i = 0; i < numBits; i++) {
@@ -75,7 +74,11 @@ bool LZW::Compressor::Uncompress()
             if (prev == 257) {
                 break;
             }
-            output.write(uncompressDict[prev].c_str(), uncompressDict[prev].size());
+            if (consoleOutput) {
+                std::cout << uncompressDict[prev];
+            } else {
+                output.write(uncompressDict[prev].c_str(), uncompressDict[prev].size());
+            }
         } else {
             if (uncompressDict.find(codesI) != uncompressDict.end()) {
                 uncompressDict[code++] = uncompressDict[prev] + uncompressDict[codesI][0];
@@ -89,19 +92,18 @@ bool LZW::Compressor::Uncompress()
             if (codesI == 257) {
                 break;
             }
-            output.write(uncompressDict[codesI].c_str(), uncompressDict[codesI].size());
+            if (consoleOutput) {
+                std::cout << uncompressDict[codesI];
+            } else {
+                output.write(uncompressDict[codesI].c_str(), uncompressDict[codesI].size());
+            }
         }
     }
     input.close();
     output.close();
-    if (consoleInput) {
-        std::filesystem::remove(fileName);
-    }
-    if (consoleOutput) {
-        std::filesystem::remove(outputFileName);
-    }
-
-    return true;
+    
+    uint32_t secondCheckSum = Utils::CalculateCRC32(outputFileName);
+    return firstChecksum == secondCheckSum;
 }
 
 bool LZW::Compressor::Compress()
@@ -110,21 +112,18 @@ bool LZW::Compressor::Compress()
         return false;
     }
     if (consoleInput) {
-        fileName = Utils::GenerateRandomString(16);
-        std::ofstream tmpFile(fileName);
+        std::ofstream tmpFile(inputFileName);
         char c;
         while (std::cin.get(c)) {
             tmpFile.put(c);
         }
         tmpFile.close();
     }
-
-    std::ifstream input(fileName);
-    std::ofstream output;
-    output = std::ofstream(fileName + ".slzw");
-    uint32_t checksum = Utils::CalculateCRC32(fileName);
+    std::ifstream input(inputFileName);
+    std::ofstream output(outputFileName);
+    uint32_t checksum = Utils::CalculateCRC32(inputFileName);
     output.write(reinterpret_cast<const char*>(&checksum), sizeof(checksum));
-    BitStream::OStream bitOutput(consoleOutput ? std::cout : output);
+    BitStream::OStream bitOutput(output);
     std::string tmpStr;
     while (1) {
         int c = input.get();
@@ -167,17 +166,11 @@ bool LZW::Compressor::Compress()
     input.close();
     output.close();
 
-    if (consoleInput) {
-        std::filesystem::remove(fileName);
-    }
-    if (consoleOutput) {
-        std::filesystem::remove(fileName + ".slzw");
-    }
-
     return true;
 }
 
-LZW::Compressor::Compressor(std::string &fileName, 
+LZW::Compressor::Compressor(std::string &inputFileName,
+                            std::string &outputFileName,
                             bool uncompress, 
                             bool consoleInput, 
                             bool consoleOutput)
@@ -185,7 +178,8 @@ LZW::Compressor::Compressor(std::string &fileName,
     this->uncompress = uncompress;
     this->consoleInput = consoleInput;
     this->consoleOutput = consoleOutput;
-    this->fileName = fileName;
+    this->inputFileName = inputFileName;
+    this->outputFileName = outputFileName;
     InitDict();
 }
 

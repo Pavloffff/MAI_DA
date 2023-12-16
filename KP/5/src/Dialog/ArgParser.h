@@ -17,7 +17,7 @@ namespace Dialog
         int filenameCounter = 0;
         std::set<std::string> defaultFlags = {"-c", "-d", "-k", "-l", "-r", "-t", "-1", "-9", "-h"};
     public:
-        std::set<std::string> Parse(int argc, char **argv);
+        std::pair<bool, std::set<std::string>> Parse(int argc, char **argv);
         std::set<std::string> DefaultFlags();
         ArgParser();
         ~ArgParser();

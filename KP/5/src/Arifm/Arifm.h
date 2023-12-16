@@ -15,7 +15,8 @@ namespace Arifm
     class Compressor
     {
     private:
-        std::string fileName;
+        std::string inputFileName;
+        std::string outputFileName;
         bool uncompress = false;
         bool consoleInput = false;
         bool consoleOutput = false;
@@ -34,7 +35,8 @@ namespace Arifm
     public:
         bool Uncompress();
         bool Compress();
-        Compressor(std::string &fileName, 
+        Compressor(std::string &inputFileName,
+                   std::string &outputFileName, 
                    bool uncompress, 
                    bool consoleInput, 
                    bool consoleOutput);

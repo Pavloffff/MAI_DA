@@ -20,10 +20,15 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
             throw Dialog::Exception(msg);
         }
         check = true;
-        Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
+        std::string inputFileName = fileName;
+        std::string tmpFileName = fileName.substr(0, fileName.find_last_of(".")) + ".tmp";
+        std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
+        Arifm::Compressor arifmCompressor(inputFileName, tmpFileName, true, consoleInput, consoleOutput);
+        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput);
         bool res = arifmCompressor.Uncompress();
-        std::string tmpFileName = fileName.substr(0, fileName.find_last_of("."));
+        res = LZWCompressor.Uncompress();
         std::filesystem::remove(tmpFileName);
+        std::filesystem::remove(outputFileName);
         if (!res) {
             std::string msg = progName + ": " + fileName + ": failed integrity check -- invalid archive";
             throw Dialog::Exception(msg);
@@ -42,42 +47,73 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
             lFirst = false;
         }
         check = true;
-        Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
+        std::string inputFileName = fileName;
+        std::string tmpFileName = fileName.substr(0, fileName.find_last_of(".")) + ".tmp";
+        std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
+        Arifm::Compressor arifmCompressor(inputFileName, tmpFileName, true, consoleInput, consoleOutput);
+        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput);
         bool res = arifmCompressor.Uncompress();
-        std::string tmpFileName = fileName.substr(0, fileName.find_last_of("."));
+        res = LZWCompressor.Uncompress();
         size_t compressedSize = std::filesystem::file_size(fileName);
-        size_t uncompressedSize = std::filesystem::file_size(tmpFileName);
+        size_t uncompressedSize = std::filesystem::file_size(outputFileName);
         double ratio = ((double) compressedSize / (double) uncompressedSize) * 100;
         std::cout << std::fixed << std::setprecision(2);
         std::cout << std::right << std::setw(20) << compressedSize
                   << std::right << std::setw(20) << uncompressedSize
                   << std::setw(20) << ratio
-                  << std::setw(20) << tmpFileName << std::endl;
+                  << std::setw(20) << outputFileName << std::endl;
         std::filesystem::remove(tmpFileName);
+        std::filesystem::remove(outputFileName);
     }
     if (flags.find("-d") != flags.end()) {
         if (fileName.substr(fileName.find_last_of(".") + 1) != extension) {
             std::string msg = progName + ": " + fileName + ": unknown suffix -- ignored";
             return false;
         }
-        // Arifm::Compressor arifmCompressor(fileName, true, consoleInput, consoleOutput);
-        // bool res = arifmCompressor.Uncompress();
-        // if (!keep) {
-        //     std::filesystem::remove(fileName);
-        // }
-        // return res;
-        LZW::Compressor LZWCompressor(fileName, true, consoleInput, consoleOutput);
-        return LZWCompressor.Uncompress();
+        std::string inputFileName = fileName;
+        if (consoleInput) {
+            inputFileName = Utils::GenerateRandomString(16);
+        }
+        std::string tmpFileName = inputFileName.substr(0, fileName.find_last_of(".")) + ".tmp";
+        std::string outputFileName = inputFileName.substr(0, fileName.find_last_of("."));
+        if (consoleInput) {
+            std::cout << progName << ": uncompresed in " << outputFileName << std::endl;
+        }
+        Arifm::Compressor arifmCompressor(inputFileName, tmpFileName, true, consoleInput, consoleOutput);
+        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput);
+        bool res = arifmCompressor.Uncompress();
+        res = LZWCompressor.Uncompress();
+        if (!keep || consoleInput) {
+            std::filesystem::remove(inputFileName);
+        }
+        if (consoleOutput) {
+            std::filesystem::remove(outputFileName);
+        }
+        std::filesystem::remove(tmpFileName);
+        return res;
     }
     if (!check) {
-        // Arifm::Compressor arifmCompressor(fileName, false, consoleInput, consoleOutput);
-        // bool res = arifmCompressor.Compress();
-        // if (!keep) {
-        //     std::filesystem::remove(fileName);
-        // }
-        // return res;
-        LZW::Compressor LZWCompressor(fileName, false, consoleInput, consoleOutput);
-        bool resLZW = LZWCompressor.Compress();
+        std::string inputFileName = fileName;
+        if (consoleInput) {
+            inputFileName = Utils::GenerateRandomString(16);
+        }
+        std::string tmpFileName = inputFileName + ".tmp";
+        std::string outputFileName = inputFileName + ".slzw";
+        if (consoleInput) {
+            std::cout << progName << ": compresed in " << outputFileName << std::endl;
+        }
+        LZW::Compressor LZWCompressor(inputFileName, tmpFileName, false, consoleInput, consoleOutput);
+        Arifm::Compressor arifmCompressor(tmpFileName, outputFileName, false, consoleInput, consoleOutput);
+        bool res = LZWCompressor.Compress();
+        res = arifmCompressor.Compress();
+        if (!keep || consoleInput) {
+            std::filesystem::remove(inputFileName);
+        }
+        if (consoleOutput) {
+            std::filesystem::remove(outputFileName);
+        }
+        std::filesystem::remove(tmpFileName);
+        return res;
     }
     return false;
 }
@@ -94,7 +130,7 @@ void Dialog::Archiver::Run()
             fileNames.push_back(arg);
         }
     }
-    if (fileNames.empty()) {
+    if (fileNames.empty() && fileCheck) {
         fileNames.push_back("-");
     }
     
@@ -165,7 +201,9 @@ Dialog::Archiver::Archiver(int argc, char **argv)
 {
     progName = argv[0];
     Dialog::ArgParser parser;
-    argSet = parser.Parse(argc, argv);
+    auto parsed = parser.Parse(argc, argv);
+    argSet = parsed.second;
+    fileCheck = parsed.first;
     defaultFlags = parser.DefaultFlags();
 }
 
