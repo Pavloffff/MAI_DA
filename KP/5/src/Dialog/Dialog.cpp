@@ -7,6 +7,17 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
     } else {
         consoleInput = false;
     }
+    if (flags.find("-1") != flags.end() && 
+        flags.find("-9") != flags.end()) {
+        std::string msg = progName + ": " + fileName + ": cannot use both -1 and -9 flags";
+        throw Dialog::Exception(msg);
+    } else if (flags.find("-1") != flags.end()) {
+        compressValue = 11;
+    } else if (flags.find("-9") != flags.end()) {
+        compressValue = 31;
+    } else {
+        compressValue = 16;
+    }
     if (flags.find("-c") != flags.end()) {
         keep = true;
         consoleOutput = true;
@@ -14,7 +25,7 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
     if (flags.find("-k") != flags.end()) {
         keep = true;
     }
-    if (flags.find("-t") != flags.end()) {  // TODO при добавлении LZW пересмотреть
+    if (flags.find("-t") != flags.end()) {
         if (fileName.substr(fileName.find_last_of(".") + 1) != extension) {
             std::string msg = progName + ": " + fileName + ": not in " + extension + " format";
             throw Dialog::Exception(msg);
@@ -24,7 +35,7 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
         std::string tmpFileName = fileName.substr(0, fileName.find_last_of(".")) + ".tmp";
         std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
         Arifm::Compressor arifmCompressor(inputFileName, tmpFileName, true, consoleInput, consoleOutput);
-        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput);
+        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput, compressValue);
         bool res = arifmCompressor.Uncompress();
         res = LZWCompressor.Uncompress();
         std::filesystem::remove(tmpFileName);
@@ -51,7 +62,7 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
         std::string tmpFileName = fileName.substr(0, fileName.find_last_of(".")) + ".tmp";
         std::string outputFileName = fileName.substr(0, fileName.find_last_of("."));
         Arifm::Compressor arifmCompressor(inputFileName, tmpFileName, true, consoleInput, consoleOutput);
-        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput);
+        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput, compressValue);
         bool res = arifmCompressor.Uncompress();
         res = LZWCompressor.Uncompress();
         size_t compressedSize = std::filesystem::file_size(fileName);
@@ -80,7 +91,7 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
             std::cout << progName << ": uncompresed in " << outputFileName << std::endl;
         }
         Arifm::Compressor arifmCompressor(inputFileName, tmpFileName, true, consoleInput, consoleOutput);
-        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput);
+        LZW::Compressor LZWCompressor(tmpFileName, outputFileName, true, consoleInput, consoleOutput, compressValue);
         bool res = arifmCompressor.Uncompress();
         res = LZWCompressor.Uncompress();
         if (!keep || consoleInput) {
@@ -102,7 +113,7 @@ bool Dialog::Archiver::Archive(std::set<std::string> &flags, std::string &fileNa
         if (consoleInput) {
             std::cout << progName << ": compresed in " << outputFileName << std::endl;
         }
-        LZW::Compressor LZWCompressor(inputFileName, tmpFileName, false, consoleInput, consoleOutput);
+        LZW::Compressor LZWCompressor(inputFileName, tmpFileName, false, consoleInput, consoleOutput, compressValue);
         Arifm::Compressor arifmCompressor(tmpFileName, outputFileName, false, consoleInput, consoleOutput);
         bool res = LZWCompressor.Compress();
         res = arifmCompressor.Compress();
@@ -167,9 +178,6 @@ void Dialog::Archiver::Run()
                     continue;
                 }
             }
-            // if (ec) {
-            //     throw Dialog::Exception(progName + ": " + ec.message());
-            // }
         }
     } catch (const Dialog::Exception &ex) {
         Dialog::Exception::LogException(ex);

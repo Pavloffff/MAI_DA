@@ -18,13 +18,16 @@ bool Arifm::Compressor::Uncompress()
 
     std::ifstream input(inputFileName);
     BitStream::IStream bitInput(input);
-    uint32_t firstChecksum;
     std::ofstream output(outputFileName);
+    
+    uint8_t compressValue;
+    input.read(reinterpret_cast<char*>(&compressValue), sizeof(compressValue));
+    output.write(reinterpret_cast<const char*>(&compressValue), sizeof(compressValue));
+    uint32_t firstChecksum;
     input.read(reinterpret_cast<char*>(&firstChecksum), sizeof(firstChecksum));
     output.write(reinterpret_cast<const char*>(&firstChecksum), sizeof(firstChecksum));
-    
-    Frequency freqs;
 
+    Frequency freqs;
     for (int i = 0; i < sumRange; i++) {
         int bit = bitInput.read();
         if (bit == -1) {
@@ -97,6 +100,9 @@ bool Arifm::Compressor::Compress()
     std::ofstream output;
     output = std::ofstream(outputFileName);
     
+    uint8_t compressValue;
+    input.read(reinterpret_cast<char*>(&compressValue), sizeof(compressValue));
+    output.write(reinterpret_cast<const char*>(&compressValue), sizeof(compressValue));
     uint32_t firstChecksum;
     input.read(reinterpret_cast<char*>(&firstChecksum), sizeof(firstChecksum));
     output.write(reinterpret_cast<const char*>(&firstChecksum), sizeof(firstChecksum));

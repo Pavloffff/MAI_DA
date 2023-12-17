@@ -22,6 +22,7 @@ namespace Dialog
         bool fileCheck = true;
         bool consoleInput = false;
         bool consoleOutput = false;
+        uint8_t compressValue;
         std::set<std::string> defaultFlags;
         std::set<std::string> argSet;
     public:

@@ -29,9 +29,11 @@ bool LZW::Compressor::Uncompress()
     std::ifstream input(inputFileName);
     BitStream::IStream bitInput(input);
     std::ofstream output(outputFileName);
+
+    input.read(reinterpret_cast<char*>(&compressValue), sizeof(compressValue));
     uint32_t firstChecksum;
     input.read(reinterpret_cast<char*>(&firstChecksum), sizeof(firstChecksum));
-
+    
     int prev = 0;
     for (int i = 0; i < numBits; i++) {
         int bit = bitInput.read();
@@ -111,8 +113,11 @@ bool LZW::Compressor::Compress()
     }
     std::ifstream input(inputFileName);
     std::ofstream output(outputFileName);
+
+    output.write(reinterpret_cast<const char*>(&compressValue), sizeof(compressValue));
     uint32_t checksum = Utils::CalculateCRC32(inputFileName);
     output.write(reinterpret_cast<const char*>(&checksum), sizeof(checksum));
+    
     BitStream::OStream bitOutput(output);
     std::string tmpStr;
     while (1) {
@@ -131,7 +136,7 @@ bool LZW::Compressor::Compress()
             if (code == Utils::BinPow(2, numBits)) {
                 numBits++;
             }
-            if (numBits == 16) { // TODO тут число поменять на переменную
+            if (numBits == compressValue) {
                 uint32_t cls = 256;
                 for (int i = numBits - 1; i >= 0; i--) {
                     bitOutput.write((cls >> i) & 1);
@@ -163,13 +168,15 @@ LZW::Compressor::Compressor(std::string &inputFileName,
                             std::string &outputFileName,
                             bool uncompress, 
                             bool consoleInput, 
-                            bool consoleOutput)
+                            bool consoleOutput,
+                            uint8_t compressValue)
 {
     this->uncompress = uncompress;
     this->consoleInput = consoleInput;
     this->consoleOutput = consoleOutput;
     this->inputFileName = inputFileName;
     this->outputFileName = outputFileName;
+    this->compressValue = compressValue;
     InitDict();
 }
 

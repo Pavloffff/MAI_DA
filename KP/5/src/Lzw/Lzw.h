@@ -15,6 +15,7 @@ namespace LZW
     private:
         std::string inputFileName;
         std::string outputFileName;
+        uint8_t compressValue;
         bool uncompress = false;
         bool consoleInput = false;
         bool consoleOutput = false;
@@ -30,7 +31,8 @@ namespace LZW
                    std::string &outputFileName, 
                    bool uncompress, 
                    bool consoleInput, 
-                   bool consoleOutput);
+                   bool consoleOutput,
+                   uint8_t compressValue);
         Compressor();
         ~Compressor();
     };
