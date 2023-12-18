@@ -58,11 +58,9 @@ Arifm::Frequency::Frequency()
     for (int i = 0; i < size; i++) {
         data.push_back(1);
     }
-    // std::cout << data.size() << "\n";
     cumulative.reserve(size + 1);
     init();
     num = right(size - 1);
-    // std::cout << num << '\n';
 }
 
 Arifm::Frequency::~Frequency()
