@@ -1,3 +1,0 @@
-/mnt/d/projects/MAI_DA/KP/5/build/CMakeFiles/slzw.dir
-/mnt/d/projects/MAI_DA/KP/5/build/CMakeFiles/edit_cache.dir
-/mnt/d/projects/MAI_DA/KP/5/build/CMakeFiles/rebuild_cache.dir
