@@ -1,0 +1,50 @@
+Windows PowerShell
+(C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+
+Попробуйте новую кроссплатформенную оболочку PowerShell (https://aka.ms/pscore6)
+
+PS C:\Users\ggame> cd D:\projects\MAI_DA\
+PS D:\projects\MAI_DA> code .
+PS D:\projects\MAI_DA> wsl
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA$ cd KP/5/
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5$ ls
+CMakeLists.txt  CP_DA_report.pdf  build  src
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5$ cd build/
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build$ ls
+CMakeFiles  bin  tests
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build$ cd ..
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5$ cd build/
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build$ cmake ..
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.2.11")
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /mnt/d/projects/MAI_DA/KP/5/build
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build$ make
+[ 10%] Building CXX object CMakeFiles/slzw.dir/src/main.cpp.o
+[ 20%] Building CXX object CMakeFiles/slzw.dir/src/Arifm/Frequency.cpp.o
+[ 30%] Building CXX object CMakeFiles/slzw.dir/src/Arifm/Arifm.cpp.o
+[ 40%] Building CXX object CMakeFiles/slzw.dir/src/Lzw/Lzw.cpp.o
+[ 50%] Building CXX object CMakeFiles/slzw.dir/src/Dialog/Dialog.cpp.o
+[ 60%] Building CXX object CMakeFiles/slzw.dir/src/Dialog/ArgParser.cpp.o
+[ 70%] Building CXX object CMakeFiles/slzw.dir/src/Dialog/Exception.cpp.o
+[ 80%] Building CXX object CMakeFiles/slzw.dir/src/Utils/BitStream.cpp.o
+[ 90%] Building CXX object CMakeFiles/slzw.dir/src/Utils/Utils.cpp.o
+[100%] Linking CXX executable bin/slzw
+[100%] Built target slzw
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build$ ls
+CMakeCache.txt  CMakeFiles  Makefile  bin  cmake_install.cmake  tests
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build$ cd tests/
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build/tests$ ls
+ggame@DESKTOP-KUQ1MR9:/mnt/d/projects/MAI_DA/KP/5/build/tests$ cat > 1.txt
